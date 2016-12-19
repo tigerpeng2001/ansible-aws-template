@@ -4,25 +4,25 @@
 #######################
 
 # Set the name of your stack
-stack: worksforme
+stack: ansible-test
 
 # Set what environment you want this tagged with: dev/stage/production
 env: dev
 
 # Set who owns it (your name)
-owner: testasaurus-rex
+owner: ansible
 
 # Set SSH Keypair to use
 ssh_keypair: "{{ stack }}-key"
 
 ## Set base AMI to use
-base_ami: ami-fce3c696
+base_ami: ami-b73b63a0
 
 ############################
 ## Set AWS Region and AZs ##
 ############################
 region: us-east-1
-zone1: us-east-1a
+zone1: us-east-1c
 zone2: us-east-1d
 
 #####################

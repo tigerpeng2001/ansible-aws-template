@@ -10,7 +10,7 @@
       rules: "{{ item.rules }}"
       rules_egress: "{{ item.rules_egress }}"
       state: present
-  with_items: VMs
+  with_items: "{{ VMs }}"
   register: sg_id
 
 # Create VM in EC2 and add it to an existing subnet
@@ -22,19 +22,28 @@
     group: "sg_{{ stack }}_VM_{{ item.name }}_{{ env }}"
     vpc_subnet_id: "{{ item.subnetID }}"
     assign_public_ip: yes
-    state: present
+# use exact_count and count_tag for idempotency
+#    state: present
     instance_tags:
       Name: "{{ stack }}_VM_{{ item.name }}_{{ env }}"
       env: "{{ env }}"
       event: "{{ stack }}"
       owner: "{{ owner }}"
-  with_items: VMs
+    exact_count: 1
+    count_tag:
+      Name: "{{ stack }}_VM_{{ item.name }}_{{ env }}" 
+  with_items: "{{ VMs }}"
  
 # Get the IDs of every SecurityGroup that matches our event and environment
 # This query needs to write all of them to a single stdout so that we can simply iterate through them in the next step.
-- shell: aws ec2 describe-instances --query 'Reservations[*].Instances[*].SecurityGroups[*].GroupId' --filter Name=tag:Name,Values="{{ stack }}"_VM_*_"{{ env }}" --output text | uniq
-  with_items: VMs
+#- shell: aws ec2 describe-instances --query 'Reservations[*].Instances[*].SecurityGroups[*].GroupId' --filter Name=tag:Name,Values="{{ stack }}_VM_{{ item.name }}_{{ env }}" --output text | uniq
+- shell: aws ec2 describe-instances --query 'Reservations[*].Instances[*].SecurityGroups[*].GroupId' --filter Name=tag:Name,Values="{{ stack }}_VM_*_{{ env }}" --output text | uniq
+#  with_items: "{{ VMs }}"
   register: groupIDs
+
+#- debug:
+#    msg: "{{ item }}"
+#  with_items: "{{groupIDs.stdout_lines}}"
 
 # Add tags to the Security Group
 - ec2_tag:
@@ -46,4 +55,4 @@
         env: "{{ env }}"
         event: "{{ stack }}"
         owner: "{{ owner }}"
-  with_items: groupIDs.results[0].stdout_lines
+  with_items: "{{ groupIDs.stdout_lines }}"
